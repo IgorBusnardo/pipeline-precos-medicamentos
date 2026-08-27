@@ -19,18 +19,19 @@ jobs:
 
       - run: pip install -r requirements.txt
 
-      # As planilhas nao vao para o Git (43 MB). O job baixa a competencia
-      # publicada pela CMED antes de rodar o pipeline.
-      - name: baixar fontes CMED
-        run: python src/download.py
-
-      - name: pipeline (extract, load, transform, test)
+      # O CI roda contra fixtures versionadas, nao contra a pagina da Anvisa.
+      # A pagina serve so a competencia vigente e muda o nome do arquivo a cada
+      # publicacao -- um push nao pode quebrar porque um orgao republicou algo.
+      # A disponibilidade da fonte e checada pelo workflow `fonte` (agendado).
+      - name: pipeline completo sobre as fixtures
+        env:
+          CMED_RAW_DIR: tests/fixtures
         run: python run.py --skip-report
 
-      # dbt build ja roda os testes; se qualquer contrato quebrar, o job falha.
       - name: publicar resultado dos testes
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: dbt-target
           path: transform/target/
+          if-no-files-found: ignore

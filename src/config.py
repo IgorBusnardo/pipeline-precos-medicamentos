@@ -1,8 +1,12 @@
 """Registro das fontes CMED e caminhos do projeto."""
+import os
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-RAW_DIR = ROOT / "data" / "raw"
+
+# CMED_RAW_DIR aponta o pipeline para outro diretorio de entrada. E assim que o
+# CI roda contra as fixtures de tests/fixtures/ sem tocar no codigo.
+RAW_DIR = Path(os.environ.get("CMED_RAW_DIR", ROOT / "data" / "raw"))
 PARQUET_DIR = ROOT / "data" / "parquet"
 DUCKDB_PATH = ROOT / "data" / "cmed.duckdb"
 
@@ -12,15 +16,22 @@ DUCKDB_PATH = ROOT / "data" / "cmed.duckdb"
 # competencia: src/download.py resolve o link atual a partir desta pagina, e
 # competencias antigas precisam ser colocadas em data/raw/ manualmente.
 SOURCE_PAGE = "https://www.gov.br/anvisa/pt-br/assuntos/medicamentos/cmed/precos"
-DOWNLOAD_LINK_PATTERN = r"/anvisa/[^\"']*xls_conformidade_site_\d+\.xlsx/@@download/file"
+# O timestamp do arquivo mistura digitos e underscore (20260811_192510234),
+# entao a classe precisa ser [\d_]+ e nao \d+.
+DOWNLOAD_LINK_PATTERN = r"/anvisa/[^\"']*xls_conformidade_site_[\d_]+\.xlsx/@@download/file"
 
 # A competencia NAO e informada aqui: ela e lida da propria planilha, da linha
 # "Publicada em DD/MM/AAAA". Assim uma competencia nova entra no pipeline so
 # colocando o arquivo em data/raw/, sem editar codigo.
+# A fonte e identificada pelo nome-base, sem extensao: a CMED publicou .xls
+# (BIFF) ate certa competencia e .xlsx depois, e as fixtures de CI sao .xlsx.
+# A extensao real e resolvida em disco.
 SOURCES = [
-    {"file": "Precos_Jul_25.xls"},
-    {"file": "Precos_Jul_26.xlsx"},
+    {"name": "Precos_Jul_25"},
+    {"name": "Precos_Jul_26"},
 ]
+
+EXTENSOES_SUPORTADAS = (".xlsx", ".xls")
 
 # A planilha traz ~41 linhas de notas antes do cabecalho, e o numero de linhas
 # muda entre competencias. Detectamos o cabecalho por esta ancora.

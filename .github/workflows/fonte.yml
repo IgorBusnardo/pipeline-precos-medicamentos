@@ -1,0 +1,25 @@
+name: fonte
+
+# Canario da fonte externa. Roda semanalmente e sob demanda: baixa a competencia
+# vigente da Anvisa e confirma que ela ainda e parseavel. Falha aqui significa
+# que o orgao mudou o site ou o layout da planilha -- nao que o codigo quebrou.
+on:
+  schedule:
+    - cron: "0 9 * * 1"
+  workflow_dispatch:
+
+jobs:
+  checar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - run: pip install -r requirements.txt
+
+      - name: baixar e parsear a competencia vigente
+        run: python tests/check_fonte_viva.py

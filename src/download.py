@@ -12,7 +12,7 @@ import re
 import urllib.parse
 import urllib.request
 
-from config import DOWNLOAD_LINK_PATTERN, RAW_DIR, SOURCE_PAGE, SOURCES
+from config import DOWNLOAD_LINK_PATTERN, EXTENSOES_SUPORTADAS, RAW_DIR, SOURCE_PAGE, SOURCES
 
 log = logging.getLogger(__name__)
 UA = {"User-Agent": "cmed-pipeline (https://github.com)"}
@@ -35,7 +35,8 @@ def resolver_link_vigente() -> str:
 def run() -> list:
     RAW_DIR.mkdir(parents=True, exist_ok=True)
 
-    faltando = [s["file"] for s in SOURCES if not (RAW_DIR / s["file"]).exists()]
+    faltando = [s["name"] for s in SOURCES
+                if not any((RAW_DIR / f"{s['name']}{e}").exists() for e in EXTENSOES_SUPORTADAS)]
     if not faltando:
         log.info("todas as competencias declaradas ja estao em data/raw/")
         return []

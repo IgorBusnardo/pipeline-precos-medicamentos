@@ -11,10 +11,12 @@ import logging
 import re
 import unicodedata
 from datetime import datetime, timezone
+from pathlib import Path
 
 import pandas as pd
 
-from config import DIM_COLS, HEADER_ANCHOR, HEADER_SEARCH_ROWS, PARQUET_DIR, RAW_DIR, RENAME, SOURCES
+from config import (DIM_COLS, EXTENSOES_SUPORTADAS, HEADER_ANCHOR, HEADER_SEARCH_ROWS,
+                    PARQUET_DIR, RAW_DIR, RENAME, SOURCES)
 
 log = logging.getLogger(__name__)
 
@@ -23,6 +25,17 @@ def to_snake(name: object) -> str:
     """'PF 17,5 %  ALC' -> 'pf_17_5_alc'. Remove acento e pontuacao."""
     s = unicodedata.normalize("NFKD", str(name)).encode("ascii", "ignore").decode()
     return re.sub(r"[^a-z0-9]+", "_", s.lower().strip()).strip("_")
+
+
+def resolve_path(nome: str) -> Path:
+    """Encontra o arquivo da fonte independente da extensao publicada."""
+    for extensao in EXTENSOES_SUPORTADAS:
+        candidato = RAW_DIR / f"{nome}{extensao}"
+        if candidato.exists():
+            return candidato
+    raise FileNotFoundError(
+        f"{nome}{{{','.join(EXTENSOES_SUPORTADAS)}}} nao encontrado em {RAW_DIR}"
+    )
 
 
 def find_header_row(path, engine: str) -> int:
@@ -64,7 +77,7 @@ def resolve_schema_drift(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def read_snapshot(source: dict) -> pd.DataFrame:
-    path = RAW_DIR / source["file"]
+    path = resolve_path(source["name"])
     engine = "xlrd" if path.suffix == ".xls" else "openpyxl"
 
     snapshot_date = pd.Timestamp(source["snapshot_date"]) if source.get("snapshot_date")         else find_publication_date(path, engine)
@@ -99,7 +112,7 @@ def run() -> list:
         df = read_snapshot(source)
         # Nomeado pelo arquivo de origem, nao pela competencia: reprocessar
         # sobrescreve o mesmo Parquet em vez de acumular um por execucao.
-        destino = PARQUET_DIR / f"{(RAW_DIR / source['file']).stem}.parquet"
+        destino = PARQUET_DIR / f"{source['name']}.parquet"
         df.to_parquet(destino, index=False)
         log.info("gravado %s (%.1f MB)", destino.name, destino.stat().st_size / 1e6)
         escritos.append(destino)

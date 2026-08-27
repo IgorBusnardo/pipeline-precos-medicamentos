@@ -1,5 +1,8 @@
 # Pipeline CMED — preços regulados de medicamentos
 
+[![pipeline](https://github.com/IgorBusnardo/CMED_Pipeline_precos/actions/workflows/pipeline.yml/badge.svg)](https://github.com/IgorBusnardo/CMED_Pipeline_precos/actions/workflows/pipeline.yml)
+[![fonte](https://github.com/IgorBusnardo/CMED_Pipeline_precos/actions/workflows/fonte.yml/badge.svg)](https://github.com/IgorBusnardo/CMED_Pipeline_precos/actions/workflows/fonte.yml)
+
 Pipeline de dados sobre a **Lista de Preços de Medicamentos da CMED/Anvisa**: extrai as planilhas publicadas, modela em star schema no DuckDB, valida com testes dbt e responde uma pergunta que o dado bruto não responde — **quanto cada medicamento pôde subir de preço, e o que explica a diferença**.
 
 ![Distribuição do reajuste de Preço Fábrica entre jul/2025 e jul/2026](docs/reajuste_por_faixa.png)
@@ -117,6 +120,8 @@ Cada uma resolve um problema real desta base:
 | Reajustes de +9.899% e −89%, quase sempre rerregistro reusando o GGREM | **Marcados** com `flag_outlier`, não deletados. A decisão de excluir fica com quem consome, não escondida no pipeline |
 | 52 colunas de preço (PF/PMC × 26 faixas) — formato inanalisável em SQL | Unpivot para formato longo; a faixa de ICMS sai do nome da coluna e vira dado |
 | A Anvisa publica só a competência vigente, com timestamp no nome do arquivo | O link é resolvido da página em tempo de execução, não fixado no código |
+| CI que baixa de site do governo quebra quando o órgão republica | Dois workflows: `pipeline` roda sobre fixtures versionadas, `fonte` checa a disponibilidade real semanalmente |
+| A CMED publicou `.xls` até certa competência e `.xlsx` depois | Fonte identificada por nome-base; a extensão é resolvida em disco |
 | Fixar a competência no config faria cada arquivo novo exigir edição de código | A data vem da linha `Publicada em` dentro da planilha — a fonte se descreve |
 
 ### Por que DuckDB e não Spark
@@ -125,7 +130,12 @@ Cada uma resolve um problema real desta base:
 
 Pelo mesmo motivo não há Airflow: são três passos sequenciais. O agendamento é do GitHub Actions.
 
-## Testes
+## Testes e CI
+
+Dois workflows, com responsabilidades separadas:
+
+- **`pipeline`** — roda o pipeline inteiro sobre fixtures versionadas em `tests/fixtures/` (800 linhas por competência, geradas por [`tests/make_fixtures.py`](tests/make_fixtures.py)). Determinístico: valida a lógica, não a disponibilidade de um site externo. A amostra preserva os casos difíceis — preços com asterisco e o GGREM duplicado.
+- **`fonte`** — semanal. Baixa a competência vigente da Anvisa e confirma que ainda é parseável. Falha aqui significa que o órgão mudou o site, não que o código quebrou.
 
 `dbt build` roda 28 testes. Os que importam:
 
@@ -176,6 +186,7 @@ Declarar onde o número não vale é parte do resultado.
 src/          extract, load, download e geração do gráfico
 transform/    projeto dbt — staging, marts, macros, testes
 analysis/     queries de análise sobre as marts
+tests/        fixtures de CI e o canário da fonte externa
 data/         raw (planilhas), parquet e o arquivo DuckDB — não versionados
 run.py        orquestrador
 ```
