@@ -1,0 +1,36 @@
+name: pipeline
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - run: pip install -r requirements.txt
+
+      # As planilhas nao vao para o Git (43 MB). O job baixa a competencia
+      # publicada pela CMED antes de rodar o pipeline.
+      - name: baixar fontes CMED
+        run: python src/download.py
+
+      - name: pipeline (extract, load, transform, test)
+        run: python run.py --skip-report
+
+      # dbt build ja roda os testes; se qualquer contrato quebrar, o job falha.
+      - name: publicar resultado dos testes
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dbt-target
+          path: transform/target/

@@ -1,0 +1,68 @@
+version: 2
+
+models:
+  - name: dim_produto
+    description: Apresentacao (GGREM) com atributos da competencia mais recente.
+    columns:
+      - name: sk_produto
+        tests: [not_null, unique]
+      - name: ggrem
+        tests: [not_null]
+      - name: cnpj
+        tests:
+          - relationships:
+              to: ref('dim_laboratorio')
+              field: cnpj
+      - name: tipo_produto
+        tests:
+          - accepted_values:
+              values: ["Genérico", "Similar", "Novo", "Específico", "Biológico",
+                       "Fitoterápico", "Produto de Terapia Avançada", "Radiofármaco", "-"]
+
+  - name: dim_laboratorio
+    columns:
+      - name: cnpj
+        tests: [not_null, unique]
+
+  - name: dim_classe
+    columns:
+      - name: classe_codigo
+        tests: [not_null, unique]
+
+  - name: fct_preco
+    description: Preco teto por apresentacao, competencia e faixa de ICMS.
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns: [sk_produto, snapshot_date, aliquota_icms, area_livre_comercio]
+    columns:
+      - name: sk_preco
+        tests: [not_null, unique]
+      - name: pf
+        description: Preco Fabrica. Teto de venda da industria para a farmacia.
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+              inclusive: false
+      - name: pmc
+        description: Preco Maximo ao Consumidor.
+      - name: fator_pmc_pf
+        description: PMC / PF. Esperado entre 1.30 e 1.40 -- e markup regulado.
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 1.30
+              max_value: 1.40
+              where: "pmc is not null"
+      - name: sk_produto
+        tests:
+          - relationships:
+              to: ref('dim_produto')
+              field: sk_produto
+
+  - name: mart_variacao_pf
+    description: Reajuste de PF entre competencias consecutivas, ICMS 18%.
+    columns:
+      - name: variacao_pct
+        tests: [not_null]
+      - name: pf_anterior
+        tests: [not_null]

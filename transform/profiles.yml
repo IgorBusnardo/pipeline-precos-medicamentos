@@ -1,0 +1,10 @@
+# O path e relativo ao diretorio de execucao do dbt. Rodando `dbt build` de
+# dentro de transform/ o default resolve; run.py roda da raiz do repo e por isso
+# injeta o caminho absoluto via CMED_DUCKDB.
+cmed:
+  target: dev
+  outputs:
+    dev:
+      type: duckdb
+      path: "{{ env_var('CMED_DUCKDB', '../data/cmed.duckdb') }}"
+      threads: 4

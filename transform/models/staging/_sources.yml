@@ -1,0 +1,19 @@
+version: 2
+
+sources:
+  - name: raw
+    description: Camada de aterrissagem. Espelha a planilha CMED, precos ainda como texto.
+    schema: raw
+    tables:
+      - name: cmed_precos
+        description: >
+          Uniao das competencias publicadas pela CMED. Grao: um registro por
+          apresentacao (GGREM) por competencia. As 52 colunas de preco sao a
+          combinacao PF/PMC x aliquota de ICMS.
+        columns:
+          - name: ggrem
+            description: Codigo GGREM. Chave natural da apresentacao.
+            tests: [not_null]
+          - name: snapshot_date
+            description: Competencia da lista.
+            tests: [not_null]

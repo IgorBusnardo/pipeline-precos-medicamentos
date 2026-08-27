@@ -1,0 +1,25 @@
+# Fontes CMED: 43 MB de planilha. Versionar binario grande em Git e ruim --
+# o pipeline baixa/le a partir de data/raw/, e a origem esta no README.
+data/raw/*.xls
+data/raw/*.xlsx
+
+# Artefatos gerados. Reproduziveis com `python run.py`.
+data/parquet/
+data/*.duckdb
+data/*.duckdb.wal
+
+# dbt
+transform/target/
+transform/dbt_packages/
+transform/logs/
+logs/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.ipynb_checkpoints/
+
+# dbt gera este arquivo com um id anonimo local
+transform/.user.yml
