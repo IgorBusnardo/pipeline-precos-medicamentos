@@ -190,3 +190,7 @@ tests/        fixtures de CI e o canário da fonte externa
 data/         raw (planilhas), parquet e o arquivo DuckDB — não versionados
 run.py        orquestrador
 ```
+
+## Licença
+
+MIT — ver [LICENSE](LICENSE). Os dados de origem são públicos, publicados pela CMED/Anvisa.
