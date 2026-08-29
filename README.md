@@ -1,7 +1,7 @@
 # Pipeline CMED — preços regulados de medicamentos
 
-[![pipeline](https://github.com/IgorBusnardo/CMED_Pipeline_precos/actions/workflows/pipeline.yml/badge.svg)](https://github.com/IgorBusnardo/CMED_Pipeline_precos/actions/workflows/pipeline.yml)
-[![fonte](https://github.com/IgorBusnardo/CMED_Pipeline_precos/actions/workflows/fonte.yml/badge.svg)](https://github.com/IgorBusnardo/CMED_Pipeline_precos/actions/workflows/fonte.yml)
+[![pipeline](https://github.com/IgorBusnardo/pipeline-precos-medicamentos/actions/workflows/pipeline.yml/badge.svg)](https://github.com/IgorBusnardo/pipeline-precos-medicamentos/actions/workflows/pipeline.yml)
+[![fonte](https://github.com/IgorBusnardo/pipeline-precos-medicamentos/actions/workflows/fonte.yml/badge.svg)](https://github.com/IgorBusnardo/pipeline-precos-medicamentos/actions/workflows/fonte.yml)
 
 Pipeline de dados sobre a **Lista de Preços de Medicamentos da CMED/Anvisa**: extrai as planilhas publicadas, modela em star schema no DuckDB, valida com testes dbt e responde uma pergunta que o dado bruto não responde — **quanto cada medicamento pôde subir de preço, e o que explica a diferença**.
 
